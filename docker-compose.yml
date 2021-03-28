@@ -9,6 +9,30 @@ services:
       - POSTGRES_DB=${DATABASE_NAME}
       - POSTGRES_USER=${DATABASE_USER}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+  redis:
+    image: "redis:alpine"
+  celery:
+    build: .
+    command: celery -A miiotest worker -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - mongodb
+      - redis
+  celery-beat:
+    build: .
+    command: celery -A miiotest beat -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - mongodb
+      - redis
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -18,3 +42,5 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - mongodb
+      - redis
